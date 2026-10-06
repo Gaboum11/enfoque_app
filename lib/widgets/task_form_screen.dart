@@ -1,6 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../models/task_model.dart';
 import '../utils/form_validators.dart';
+
+/// Modelo de presentación para etiquetas modernas con iconos vectoriales de diseño
+class TagBadgeItem {
+  final String label;
+  final IconData icon;
+  final Color backgroundColor;
+  final Color textColor;
+  final Color borderColor;
+  bool isSelected;
+
+  TagBadgeItem({
+    required this.label,
+    required this.icon,
+    required this.backgroundColor,
+    required this.textColor,
+    required this.borderColor,
+    this.isSelected = true,
+  });
+}
 
 class TaskFormScreen extends StatefulWidget {
   const TaskFormScreen({super.key});
@@ -21,9 +41,52 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
   // Estados del formulario
   double _durationSliderValue = 45;
   String _selectedPriority = 'Alta';
-  final List<String> _tags = ['Trabajo', 'Informe', 'Urgente'];
   bool _blockDistractions = true;
   String? _appsErrorMessage;
+
+  // Lista de etiquetas con iconos vectoriales profesionales Lucide
+  final List<TagBadgeItem> _availableTags = [
+    TagBadgeItem(
+      label: 'Proyecto',
+      icon: LucideIcons.laptop,
+      backgroundColor: const Color(0xFFEEF2FF),
+      textColor: const Color(0xFF4338CA),
+      borderColor: const Color(0xFFC7D2FE),
+      isSelected: true,
+    ),
+    TagBadgeItem(
+      label: 'Informe',
+      icon: LucideIcons.fileText,
+      backgroundColor: const Color(0xFFF5F3FF),
+      textColor: const Color(0xFF6D28D9),
+      borderColor: const Color(0xFFDDD6FE),
+      isSelected: true,
+    ),
+    TagBadgeItem(
+      label: 'Urgente',
+      icon: LucideIcons.zap,
+      backgroundColor: const Color(0xFFFEF2F2),
+      textColor: const Color(0xFFDC2626),
+      borderColor: const Color(0xFFFECACA),
+      isSelected: true,
+    ),
+    TagBadgeItem(
+      label: 'Estudio',
+      icon: LucideIcons.bookOpen,
+      backgroundColor: const Color(0xFFECFDF5),
+      textColor: const Color(0xFF047857),
+      borderColor: const Color(0xFFA7F3D0),
+      isSelected: false,
+    ),
+    TagBadgeItem(
+      label: 'Examen',
+      icon: LucideIcons.target,
+      backgroundColor: const Color(0xFFFFFBEB),
+      textColor: const Color(0xFFB45309),
+      borderColor: const Color(0xFFFDE68A),
+      isSelected: false,
+    ),
+  ];
 
   // Lista de apps distractoras disponibles
   final List<BlockedAppItem> _availableApps = [
@@ -81,10 +144,26 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
     });
   }
 
+  // Calcula hora estimada de finalización
+  String _getEstimatedEndTime(int minutes) {
+    final now = DateTime.now();
+    final end = now.add(Duration(minutes: minutes));
+    final hour = end.hour > 12 ? end.hour - 12 : (end.hour == 0 ? 12 : end.hour);
+    final period = end.hour >= 12 ? 'PM' : 'AM';
+    final minuteStr = end.minute.toString().padLeft(2, '0');
+    return '$hour:$minuteStr $period';
+  }
+
   // Obtiene nombres de las apps actualmente bloqueadas
   List<String> get _selectedAppNames => _availableApps
       .where((app) => app.isBlocked)
       .map((app) => app.name)
+      .toList();
+
+  // Obtiene etiquetas seleccionadas
+  List<String> get _selectedTags => _availableTags
+      .where((t) => t.isSelected)
+      .map((t) => t.label)
       .toList();
 
   // Acción de guardar y validar el formulario
@@ -131,9 +210,9 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: _titleController.text.trim(),
       goal: _goalController.text.trim(),
-      durationMinutes: int.parse(_durationController.text.trim()),
+      durationMinutes: int.tryParse(_durationController.text.trim()) ?? 25,
       priority: _selectedPriority,
-      tags: List.from(_tags),
+      tags: _selectedTags,
       blockDistractions: _blockDistractions,
       blockedApps: _selectedAppNames,
     );
@@ -172,10 +251,10 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E9),
+                    color: const Color(0xFFECFDF5),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 32),
+                  child: const Icon(LucideIcons.checkCircle2, color: Color(0xFF059669), size: 30),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -188,8 +267,8 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                       ),
                       Text(
                         startFocusMode
-                          ? 'Iniciando sesión de enfoque de ${task.durationMinutes} min...'
-                          : 'Almacenada con éxito en la lista offline',
+                            ? 'Iniciando sesión de enfoque de ${task.durationMinutes} min (Terminas ${_getEstimatedEndTime(task.durationMinutes)})'
+                            : 'Almacenada con éxito en la lista offline',
                         style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
                       ),
                     ],
@@ -197,14 +276,35 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8F9FE),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE9ECF8)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(LucideIcons.shieldCheck, size: 18, color: Color(0xFF3227C9)),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Al finalizar la sesión, se te preguntará si cumpliste el objetivo para registrarlo en el historial.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF4338CA), fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             const Divider(),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             _buildSummaryRow('Título', task.title),
             _buildSummaryRow('Objetivo', task.goal),
             _buildSummaryRow('Duración', '${task.durationMinutes} minutos'),
             _buildSummaryRow('Prioridad', task.priority),
-            _buildSummaryRow('Etiquetas', task.tags.map((t) => '#$t').join(', ')),
+            _buildSummaryRow('Etiquetas', task.tags.isEmpty ? 'Ninguna' : task.tags.map((t) => '#$t').join(', ')),
             _buildSummaryRow(
               'Bloqueo',
               task.blockDistractions
@@ -222,7 +322,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
-                child: const Text('Entendido', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: const Text('Comenzar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -249,48 +349,111 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
     );
   }
 
-  // Diálogo interactivo para añadir etiqueta
+  // Diálogo interactivo con selector de iconos Lucide vectoriales
   void _showAddTagDialog() {
     final tagCtrl = TextEditingController();
+    IconData selectedIcon = LucideIcons.bookOpen;
+    final availableIcons = [
+      LucideIcons.bookOpen,
+      LucideIcons.laptop,
+      LucideIcons.fileText,
+      LucideIcons.zap,
+      LucideIcons.target,
+      LucideIcons.flaskConical,
+      LucideIcons.palette,
+      LucideIcons.bookmark,
+      LucideIcons.calculator,
+      LucideIcons.penTool,
+    ];
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text('Agregar Etiqueta', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: TextField(
-          controller: tagCtrl,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: 'Ej. Matemáticas, Proyecto...',
-            prefixText: '#',
-            filled: true,
-            fillColor: const Color(0xFFF6F7FB),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDlgState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Nueva Etiqueta', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Selecciona un icono vectorial:',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF5A5D72)),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: availableIcons.map((iconData) {
+                  final isSel = selectedIcon == iconData;
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () => setDlgState(() => selectedIcon = iconData),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isSel ? const Color(0xFFECEEFD) : const Color(0xFFF3F4F9),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isSel ? const Color(0xFF3227C9) : Colors.transparent,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Icon(iconData, size: 18, color: isSel ? const Color(0xFF3227C9) : const Color(0xFF5A5D72)),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: tagCtrl,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Nombre (ej. Matemáticas)',
+                  prefixText: '#',
+                  filled: true,
+                  fillColor: const Color(0xFFF6F7FB),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ],
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final newTag = tagCtrl.text.trim().replaceAll('#', '');
+                if (newTag.isNotEmpty && !_availableTags.any((t) => t.label.toLowerCase() == newTag.toLowerCase())) {
+                  setState(() {
+                    _availableTags.add(
+                      TagBadgeItem(
+                        label: newTag,
+                        icon: selectedIcon,
+                        backgroundColor: const Color(0xFFEEF2FF),
+                        textColor: const Color(0xFF4338CA),
+                        borderColor: const Color(0xFFC7D2FE),
+                        isSelected: true,
+                      ),
+                    );
+                  });
+                }
+                Navigator.pop(ctx);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF3227C9),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Agregar'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final newTag = tagCtrl.text.trim().replaceAll('#', '');
-              if (newTag.isNotEmpty && !_tags.contains(newTag)) {
-                setState(() => _tags.add(newTag));
-              }
-              Navigator.pop(ctx);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3227C9),
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Agregar'),
-          ),
-        ],
       ),
     );
   }
@@ -305,7 +468,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: const Row(
               children: [
-                Icon(Icons.shield_outlined, color: Color(0xFF3227C9)),
+                Icon(LucideIcons.shieldCheck, color: Color(0xFF3227C9), size: 20),
                 SizedBox(width: 8),
                 Text('Apps a Bloquear', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               ],
@@ -327,7 +490,6 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                         app.isBlocked = val ?? false;
                       });
                       setState(() {
-                        // Sincronizar estado global
                         _appsErrorMessage = null;
                       });
                     },
@@ -396,7 +558,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
             child: CircleAvatar(
               radius: 18,
               backgroundColor: Color(0xFF3227C9),
-              child: Icon(Icons.person, color: Colors.white, size: 20),
+              child: Icon(LucideIcons.user, color: Colors.white, size: 18),
             ),
           ),
         ],
@@ -426,11 +588,11 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                 _buildDurationField(),
                 const SizedBox(height: 20),
 
-                // 4. Selector de Prioridad
+                // 4. Selector de Prioridad Rediseñado
                 _buildPrioritySection(),
                 const SizedBox(height: 20),
 
-                // 5. Selector de Etiquetas
+                // 5. Selector de Etiquetas con Iconos Vectoriales Lucide
                 _buildTagsSection(),
                 const SizedBox(height: 20),
 
@@ -473,7 +635,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  const Icon(Icons.smartphone_outlined, size: 14, color: Color(0xFF6B6E82)),
+                  const Icon(LucideIcons.smartphone, size: 14, color: Color(0xFF6B6E82)),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
@@ -493,7 +655,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
             color: Color(0xFFECEEFD),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.edit_note, color: Color(0xFF3227C9), size: 22),
+          child: const Icon(LucideIcons.fileEdit, color: Color(0xFF3227C9), size: 18),
         ),
       ],
     );
@@ -527,7 +689,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                 ),
               ),
             ),
-            const Icon(Icons.edit_note, color: Color(0xFF9E9EAF), size: 20),
+            const Icon(LucideIcons.pencil, color: Color(0xFF9E9EAF), size: 17),
           ],
         ),
         const SizedBox(height: 8),
@@ -568,7 +730,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
         Row(
           children: [
             Icon(
-              isValid ? Icons.check_circle_outline : Icons.info_outline,
+              isValid ? LucideIcons.checkCircle : LucideIcons.info,
               size: 15,
               color: isValid ? const Color(0xFF3227C9) : const Color(0xFF757588),
             ),
@@ -589,7 +751,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
     );
   }
 
-  // 2. Campo: Objetivo detallado con TextFormField multilínea y validación
+  // 2. Campo: Objetivo detallado con sugerencias vectoriales limpias
   Widget _buildGoalField() {
     final isValid = _goalLength >= 10;
 
@@ -617,10 +779,11 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                 ),
               ),
             ),
-            const Icon(Icons.outlined_flag, color: Color(0xFF9E9EAF), size: 18),
+            const Icon(LucideIcons.flag, color: Color(0xFF9E9EAF), size: 17),
           ],
         ),
         const SizedBox(height: 6),
+        // Badge de ayuda metodológica
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
@@ -630,8 +793,8 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
           child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.place_outlined, size: 13, color: Color(0xFF3227C9)),
-              SizedBox(width: 4),
+              Icon(LucideIcons.compass, size: 13, color: Color(0xFF3227C9)),
+              SizedBox(width: 5),
               Flexible(
                 child: Text(
                   'Mínimo 10 caracteres para evitar metas vagas',
@@ -684,7 +847,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
         Row(
           children: [
             Icon(
-              isValid ? Icons.check_circle_outline : Icons.info_outline,
+              isValid ? LucideIcons.checkCircle : LucideIcons.info,
               size: 15,
               color: isValid ? const Color(0xFF3227C9) : const Color(0xFF757588),
             ),
@@ -701,11 +864,55 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        // Sugerencias amigables con icono vectorial Lucide
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildInspirationChip('Resolver 5 ejercicios'),
+              const SizedBox(width: 8),
+              _buildInspirationChip('Redactar introducción y conclusiones'),
+              const SizedBox(width: 8),
+              _buildInspirationChip('Repasar apuntes para examen'),
+            ],
+          ),
+        ),
       ],
     );
   }
 
-  // 3. Campo: Duración de la sesión con Presets, Slider y TextFormField sincronizado
+  Widget _buildInspirationChip(String text) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () {
+        setState(() {
+          _goalController.text = text;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF3F4F9),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE9ECF8)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(LucideIcons.sparkles, size: 12, color: Color(0xFF3227C9)),
+            const SizedBox(width: 5),
+            Text(
+              text,
+              style: const TextStyle(fontSize: 11, color: Color(0xFF5A5D72), fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 3. Campo: Duración de la sesión con Presets, Slider y Hora Estimada
   Widget _buildDurationField() {
     final currentMinutes = int.tryParse(_durationController.text) ?? _durationSliderValue.round();
 
@@ -822,7 +1029,34 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
             Text('180 min (3h)', style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
+
+        // Hora estimada de término con icono Lucide Clock
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F9),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.clock, size: 14, color: Color(0xFF3227C9)),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  'Si inicias ahora, terminarás a las ${_getEstimatedEndTime(currentMinutes)}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF3227C9),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
 
         // Entrada manual TextFormField vinculada para validación estricta
         Wrap(
@@ -833,7 +1067,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
             const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.timer_outlined, size: 16, color: Color(0xFF5A5D72)),
+                Icon(LucideIcons.timer, size: 16, color: Color(0xFF5A5D72)),
                 SizedBox(width: 6),
                 Text(
                   'Entrada directa en minutos:',
@@ -879,7 +1113,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
     );
   }
 
-  // 4. Selector de Prioridad (Alta, Media, Baja)
+  // 4. Selector de Prioridad Moderno y Suave con Iconos Lucide
   Widget _buildPrioritySection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -904,57 +1138,73 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
         const SizedBox(height: 8),
         Row(
           children: [
-            _buildPriorityChip('Alta', const Color(0xFFBA1A1A), isDot: false),
+            _buildPriorityBadge(
+              label: 'Alta',
+              icon: LucideIcons.alertTriangle,
+              activeBg: const Color(0xFFFEE2E2),
+              activeColor: const Color(0xFFB91C1C),
+              activeBorder: const Color(0xFFFCA5A5),
+            ),
             const SizedBox(width: 10),
-            _buildPriorityChip('Media', const Color(0xFFF59E0B), isDot: true),
+            _buildPriorityBadge(
+              label: 'Media',
+              icon: LucideIcons.equal,
+              activeBg: const Color(0xFFFEF3C7),
+              activeColor: const Color(0xFFB45309),
+              activeBorder: const Color(0xFFFCD34D),
+            ),
             const SizedBox(width: 10),
-            _buildPriorityChip('Baja', const Color(0xFF10B981), isDot: true),
+            _buildPriorityBadge(
+              label: 'Baja',
+              icon: LucideIcons.arrowDown,
+              activeBg: const Color(0xFFD1FAE5),
+              activeColor: const Color(0xFF047857),
+              activeBorder: const Color(0xFF6EE7B7),
+            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildPriorityChip(String label, Color color, {required bool isDot}) {
+  Widget _buildPriorityBadge({
+    required String label,
+    required IconData icon,
+    required Color activeBg,
+    required Color activeColor,
+    required Color activeBorder,
+  }) {
     final isSelected = _selectedPriority == label;
-    final isAltaSelected = isSelected && label == 'Alta';
 
     return Expanded(
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         onTap: () => setState(() => _selectedPriority = label),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 11),
           decoration: BoxDecoration(
-            color: isAltaSelected
-                ? const Color(0xFFBA1A1A)
-                : isSelected
-                    ? const Color(0xFFECEEFD)
-                    : const Color(0xFFF3F4F9),
-            borderRadius: BorderRadius.circular(12),
+            color: isSelected ? activeBg : const Color(0xFFF3F4F9),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: isSelected
-                  ? (isAltaSelected ? const Color(0xFFBA1A1A) : const Color(0xFF3227C9))
-                  : const Color(0xFFE9ECF8),
+              color: isSelected ? activeBorder : const Color(0xFFE9ECF8),
+              width: isSelected ? 1.5 : 1,
             ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (isDot) ...[
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                ),
-                const SizedBox(width: 6),
-              ],
+              Icon(
+                isSelected ? LucideIcons.checkCircle2 : icon,
+                size: 15,
+                color: isSelected ? activeColor : const Color(0xFF757588),
+              ),
+              const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
-                  color: isAltaSelected ? Colors.white : const Color(0xFF1E1E2F),
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                  color: isSelected ? activeColor : const Color(0xFF1E1E2F),
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                   fontSize: 13,
                 ),
               ),
@@ -965,72 +1215,55 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
     );
   }
 
-  // 5. Selector de Etiquetas interactivas
+  // 5. Selector de Etiquetas Rediseñado con Lucide Icons (Minimalista, Sofisticado)
   Widget _buildTagsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Etiquetas',
-          style: TextStyle(
-            color: Color(0xFF1E1E2F),
-            fontWeight: FontWeight.w700,
-            fontSize: 15,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            ..._tags.map(
-              (tag) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFECEEFD),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFD6DBF8)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '#$tag',
-                      style: const TextStyle(
-                        color: Color(0xFF3227C9),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    InkWell(
-                      onTap: () => setState(() => _tags.remove(tag)),
-                      child: const Icon(Icons.close, size: 14, color: Color(0xFF3227C9)),
-                    ),
-                  ],
-                ),
+            const Text(
+              'Etiquetas de estudio',
+              style: TextStyle(
+                color: Color(0xFF1E1E2F),
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
               ),
             ),
+            Text(
+              '${_selectedTags.length} seleccionadas',
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 10,
+          children: [
+            ..._availableTags.map((tag) => _buildModernTagChip(tag)),
+            // Botón Agregar Tag moderno con icono Lucide Plus
             InkWell(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
               onTap: _showAddTagDialog,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFD6DBF8), style: BorderStyle.solid),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFF3227C9), style: BorderStyle.solid),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.add, size: 14, color: Color(0xFF3227C9)),
-                    SizedBox(width: 4),
+                    Icon(LucideIcons.plus, size: 14, color: Color(0xFF3227C9)),
+                    SizedBox(width: 5),
                     Text(
-                      'Agregar Tag',
+                      'Nueva Etiqueta',
                       style: TextStyle(
                         color: Color(0xFF3227C9),
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         fontSize: 12,
                       ),
                     ),
@@ -1041,6 +1274,57 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildModernTagChip(TagBadgeItem tag) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: () {
+        setState(() {
+          tag.isSelected = !tag.isSelected;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: tag.isSelected ? tag.backgroundColor : const Color(0xFFF3F4F9),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: tag.isSelected ? tag.borderColor : const Color(0xFFE5E7EB),
+            width: tag.isSelected ? 1.5 : 1,
+          ),
+          boxShadow: tag.isSelected
+              ? [
+                  BoxShadow(
+                    color: tag.textColor.withOpacity(0.08),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(tag.icon, size: 14, color: tag.isSelected ? tag.textColor : const Color(0xFF6B7280)),
+            const SizedBox(width: 6),
+            Text(
+              tag.label,
+              style: TextStyle(
+                color: tag.isSelected ? tag.textColor : const Color(0xFF6B7280),
+                fontWeight: tag.isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 12,
+              ),
+            ),
+            if (tag.isSelected) ...[
+              const SizedBox(width: 6),
+              Icon(LucideIcons.check, size: 13, color: tag.textColor),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -1071,11 +1355,11 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
               Container(
                 width: 36,
                 height: 36,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFECEEFD),
-                  borderRadius: BorderRadius.circular(10),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFECEEFD),
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
                 ),
-                child: const Icon(Icons.do_not_disturb_on_outlined, color: Color(0xFF3227C9), size: 20),
+                child: const Icon(LucideIcons.shieldAlert, color: Color(0xFF3227C9), size: 18),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1152,7 +1436,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Icon(Icons.error_outline, size: 14, color: Color(0xFFBA1A1A)),
+                  const Icon(LucideIcons.alertCircle, size: 14, color: Color(0xFFBA1A1A)),
                   const SizedBox(width: 6),
                   Text(
                     _appsErrorMessage!,
@@ -1177,23 +1461,23 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
 
     switch (app.name) {
       case 'Instagram':
-        icon = Icons.camera_alt_outlined;
+        icon = LucideIcons.instagram;
         iconColor = const Color(0xFFE1306C);
         break;
       case 'TikTok':
-        icon = Icons.music_note_outlined;
+        icon = LucideIcons.music2;
         iconColor = const Color(0xFF25F4EE);
         break;
       case 'Twitter / X':
-        icon = Icons.chat_bubble_outline;
+        icon = LucideIcons.twitter;
         iconColor = const Color(0xFF1DA1F2);
         break;
       case 'YouTube':
-        icon = Icons.play_arrow_outlined;
+        icon = LucideIcons.youtube;
         iconColor = const Color(0xFFFF0000);
         break;
       default:
-        icon = Icons.apps;
+        icon = LucideIcons.layoutGrid;
         iconColor = const Color(0xFF3227C9);
     }
 
@@ -1239,7 +1523,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
               ),
             ),
             Icon(
-              app.isBlocked ? Icons.check_circle : Icons.circle_outlined,
+              app.isBlocked ? LucideIcons.checkCircle2 : LucideIcons.circle,
               size: 14,
               color: app.isBlocked ? const Color(0xFF3227C9) : Colors.grey.shade400,
             ),
@@ -1265,7 +1549,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.play_circle_outline, size: 20),
+            Icon(LucideIcons.playCircle, size: 19),
             SizedBox(width: 8),
             Text(
               'Guardar e Iniciar Enfoque',
@@ -1293,7 +1577,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.bookmark_border_outlined, size: 19),
+            Icon(LucideIcons.bookmark, size: 18),
             SizedBox(width: 8),
             Text(
               'Solo Guardar en Lista',
@@ -1305,7 +1589,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
     );
   }
 
-  // Barra de navegación inferior idéntica al diseño
+  // Barra de navegación inferior
   Widget _buildBottomNavigationBar() {
     return Container(
       decoration: const BoxDecoration(
@@ -1316,10 +1600,10 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildNavItem(icon: Icons.check_circle_outline, label: 'Tareas', isSelected: false),
-          _buildNavItem(icon: Icons.add_circle_outline, label: 'Nueva', isSelected: true),
-          _buildNavItem(icon: Icons.adjust_outlined, label: 'Enfoque', isSelected: false),
-          _buildNavItem(icon: Icons.show_chart_outlined, label: 'Historial', isSelected: false),
+          _buildNavItem(icon: LucideIcons.checkCircle, label: 'Tareas', isSelected: false),
+          _buildNavItem(icon: LucideIcons.plusCircle, label: 'Nueva', isSelected: true),
+          _buildNavItem(icon: LucideIcons.target, label: 'Enfoque', isSelected: false),
+          _buildNavItem(icon: LucideIcons.lineChart, label: 'Historial', isSelected: false),
         ],
       ),
     );
@@ -1336,10 +1620,10 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
               color: const Color(0xFFECEEFD),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(icon, color: const Color(0xFF3227C9), size: 22),
+            child: Icon(icon, color: const Color(0xFF3227C9), size: 20),
           )
         else
-          Icon(icon, color: Colors.grey.shade500, size: 22),
+          Icon(icon, color: Colors.grey.shade500, size: 20),
         const SizedBox(height: 3),
         Text(
           label,
