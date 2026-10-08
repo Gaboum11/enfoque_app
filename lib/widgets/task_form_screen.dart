@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../models/task_model.dart';
+import '../models/session_model.dart';
+import '../services/task_service.dart';
 import '../utils/form_validators.dart';
+import 'focus_session_screen.dart';
 
 /// Modelo de presentación para etiquetas modernas con iconos vectoriales de diseño
 class TagBadgeItem {
@@ -23,7 +26,12 @@ class TagBadgeItem {
 }
 
 class TaskFormScreen extends StatefulWidget {
-  const TaskFormScreen({super.key});
+  final bool showBottomNav;
+
+  const TaskFormScreen({
+    super.key,
+    this.showBottomNav = false,
+  });
 
   @override
   State<TaskFormScreen> createState() => _TaskFormScreenState();
@@ -217,6 +225,9 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
       blockedApps: _selectedAppNames,
     );
 
+    // Persistir localmente de forma 100% offline
+    TaskService.instance.saveTask(task);
+
     _showSuccessDialog(task, startFocusMode: startFocusMode);
   }
 
@@ -316,13 +327,35 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: () => Navigator.pop(ctx),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  if (startFocusMode) {
+                    final session = FocusSession(
+                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                      taskId: task.id,
+                      taskTitle: task.title,
+                      taskGoal: task.goal,
+                      startedAt: DateTime.now(),
+                      scheduledMinutes: task.durationMinutes,
+                      blockedApps: task.blockDistractions ? task.blockedApps : const [],
+                    );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => FocusSessionScreen(session: session),
+                      ),
+                    );
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF3227C9),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
-                child: const Text('Comenzar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: Text(
+                  startFocusMode ? 'Comenzar Sesión' : 'Listo',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ],
@@ -612,7 +645,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      bottomNavigationBar: widget.showBottomNav ? _buildBottomNavigationBar() : null,
     );
   }
 

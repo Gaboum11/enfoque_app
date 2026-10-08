@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'widgets/task_form_screen.dart';
+import 'widgets/home_navigation_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +31,7 @@ class EnfoqueApp extends StatelessWidget {
         ),
         fontFamily: 'Roboto',
       ),
-      home: const TaskFormScreen(),
+      home: const HomeNavigationScreen(),
     );
   }
 }
